@@ -1,8 +1,6 @@
-import jwt from 'jsonwebtoken';
+import { sign, verify, Secret, SignOptions } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+const JWT_SECRET: Secret = process.env.JWT_SECRET || 'fallback-secret-change-me';
 
 interface TokenPayload {
     userId: string;
@@ -11,24 +9,32 @@ interface TokenPayload {
 }
 
 export function generateAccessToken(userId: string, sessionId: string): string {
-    return jwt.sign(
+    const options: SignOptions = {
+        expiresIn: (process.env.JWT_EXPIRES_IN || '1h') as any
+    };
+
+    return sign(
         { userId, sessionId, type: 'access' },
         JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN as any }
+        options
     );
 }
 
 export function generateRefreshToken(userId: string, sessionId: string): string {
-    return jwt.sign(
+    const options: SignOptions = {
+        expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any
+    };
+
+    return sign(
         { userId, sessionId, type: 'refresh' },
         JWT_SECRET,
-        { expiresIn: JWT_REFRESH_EXPIRES_IN as any }
+        options
     );
 }
 
 export function verifyToken(token: string): TokenPayload | null {
     try {
-        return jwt.verify(token, JWT_SECRET) as TokenPayload;
+        return verify(token, JWT_SECRET) as TokenPayload;
     } catch {
         return null;
     }

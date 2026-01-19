@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==================== ADMINS ====================
+model Admin {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  isSuperAdmin  Boolean  @default(false) @map("is_super_admin")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  apps App[]
+
+  @@map("admins")
+}
+
+// ==================== APPS ====================
+model App {
+  id           String    @id @default(uuid())
+  adminId      String    @map("admin_id")
+  name         String
+  secretKey    String    @unique @map("secret_key")
+  status       AppStatus @default(ONLINE)
+  minVersion   String?   @map("min_version")
+  hwidLock     Boolean   @default(true) @map("hwid_lock")
+  maxSessions  Int       @default(1) @map("max_sessions")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  admin       Admin        @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  users       User[]
+  keys        Key[]
+  settings    AppSettings?
+  loginLogs   LoginLog[]
+
+  @@map("apps")
+}
+
+enum AppStatus {
+  ONLINE
+  OFFLINE
+  MAINTENANCE
+}
+
+// ==================== USERS ====================
+model User {
+  id           String    @id @default(uuid())
+  appId        String    @map("app_id")
+  username     String
+  email        String?
+  passwordHash String?   @map("password_hash")
+  hwid         String?
+  isBanned     Boolean   @default(false) @map("is_banned")
+  banReason    String?   @map("ban_reason")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  expiresAt    DateTime? @map("expires_at")
+
+  app       App        @relation(fields: [appId], references: [id], onDelete: Cascade)
+  keys      Key[]
+  sessions  Session[]
+  hwidLogs  HwidLog[]
+  loginLogs LoginLog[]
+
+  @@unique([appId, username])
+  @@map("users")
+}
+
+// ==================== KEYS ====================
+model Key {
+  id                 String    @id @default(uuid())
+  appId              String    @map("app_id")
+  userId             String?   @map("user_id")
+  keyValue           String    @unique @map("key_value")
+  keyType            KeyType   @default(TIME) @map("key_type")
+  durationDays       Int?      @map("duration_days")
+  maxUses            Int?      @map("max_uses")
+  currentUses        Int       @default(0) @map("current_uses")
+  maxActivations     Int       @default(1) @map("max_activations")
+  currentActivations Int       @default(0) @map("current_activations")
+  isActive           Boolean   @default(true) @map("is_active")
+  note               String?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  activatedAt        DateTime? @map("activated_at")
+  expiresAt          DateTime? @map("expires_at")
+
+  app  App   @relation(fields: [appId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("keys")
+}
+
+enum KeyType {
+  TIME
+  LIFETIME
+  USES
+}
+
+// ==================== SESSIONS ====================
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  hwid      String?
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ==================== HWID LOGS ====================
+model HwidLog {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  oldHwid   String?  @map("old_hwid")
+  newHwid   String   @map("new_hwid")
+  resetBy   String?  @map("reset_by")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("hwid_logs")
+}
+
+// ==================== LOGIN LOGS ====================
+model LoginLog {
+  id            String   @id @default(uuid())
+  userId        String?  @map("user_id")
+  appId         String   @map("app_id")
+  ipAddress     String?  @map("ip_address")
+  hwid          String?
+  success       Boolean
+  failureReason String?  @map("failure_reason")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  app  App   @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@map("login_logs")
+}
+
+// ==================== APP SETTINGS ====================
+model AppSettings {
+  id               String   @id @default(uuid())
+  appId            String   @unique @map("app_id")
+  antiBruteforce   Boolean  @default(true) @map("anti_bruteforce")
+  maxLoginAttempts Int      @default(5) @map("max_login_attempts")
+  lockoutDuration  Int      @default(900) @map("lockout_duration")
+  requireHwid      Boolean  @default(true) @map("require_hwid")
+  allowVpn         Boolean  @default(false) @map("allow_vpn")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  app App @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@map("app_settings")
+}
+
+// ==================== API LOGS ====================
+model ApiLog {
+  id           String   @id @default(uuid())
+  method       String
+  path         String
+  statusCode   Int      @map("status_code")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  responseTime Int?     @map("response_time")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("api_logs")
+}

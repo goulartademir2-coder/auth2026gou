@@ -104,7 +104,7 @@ export default function SettingsPage() {
                                     <div className="form-group">
                                         <label>Master API Key</label>
                                         <div className="input-with-button">
-                                            <input type="password" readonly className="input" defaultValue="••••••••••••••••" />
+                                            <input type="password" readOnly className="input" defaultValue="••••••••••••••••" />
                                             <Button variant="secondary">Revelar</Button>
                                         </div>
                                     </div>

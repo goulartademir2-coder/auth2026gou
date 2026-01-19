@@ -37,10 +37,10 @@ export async function POST() {
             data: { message: 'Super admin created successfully' }
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Init error:', error);
         return NextResponse.json(
-            { success: false, error: { message: 'Failed to initialize' } },
+            { success: false, error: { message: error.message || 'Failed to initialize' } },
             { status: 500 }
         );
     }

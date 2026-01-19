@@ -15,6 +15,9 @@ export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
   const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newUser, setNewUser] = useState({ username: '', email: '', password: '' });
 
   const fetchUsers = async (page = 1, search = '') => {
     setLoading(true);
@@ -42,6 +45,28 @@ export default function UsersPage() {
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= pagination.pages) {
       fetchUsers(newPage, searchQuery);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.username || !newUser.email || !newUser.password) return;
+    setIsCreating(true);
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowCreateModal(false);
+        setNewUser({ username: '', email: '', password: '' });
+        fetchUsers(pagination.page, searchQuery);
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -152,10 +177,18 @@ export default function UsersPage() {
           </div>
 
           <div className="toolbar-right">
-            <Button variant="secondary" icon={<Download size={16} />}>
+            <Button
+              variant="secondary"
+              icon={<Download size={16} />}
+              onClick={() => alert('Recurso a ser implementado: Exportar relatório de usuários')}
+            >
               Exportar
             </Button>
-            <Button variant="primary" icon={<Plus size={16} />}>
+            <Button
+              variant="primary"
+              icon={<Plus size={16} />}
+              onClick={() => setShowCreateModal(true)}
+            >
               Novo Usuário
             </Button>
           </div>
@@ -231,6 +264,61 @@ export default function UsersPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Create User Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Novo Usuário"
+        size="md"
+      >
+        <div className="create-form">
+          <div className="input-group">
+            <label className="input-label">Username</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="Ex: joao_premium"
+              value={newUser.username}
+              onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+            />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Email</label>
+            <input
+              type="email"
+              className="input"
+              placeholder="joao@example.com"
+              value={newUser.email}
+              onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
+            />
+          </div>
+          <div className="input-group">
+            <label className="input-label">Senha</label>
+            <input
+              type="password"
+              className="input"
+              placeholder="••••••••"
+              value={newUser.password}
+              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+            />
+          </div>
+
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreateUser}
+              loading={isCreating}
+              disabled={!newUser.username || !newUser.email || !newUser.password || isCreating}
+            >
+              Criar Usuário
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Ban Modal */}
       <Modal
@@ -499,6 +587,38 @@ export default function UsersPage() {
           justify-content: flex-end;
           gap: 12px;
           margin-top: 8px;
+        }
+
+        .create-form {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .input-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .input-label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: var(--color-text-secondary);
+        }
+
+        .input {
+          padding: 10px 14px;
+          background: var(--color-bg-tertiary);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
+          color: var(--color-text-primary);
+          font-size: 0.875rem;
+        }
+
+        .input:focus {
+          outline: none;
+          border-color: var(--color-primary);
         }
 
         @media (max-width: 768px) {

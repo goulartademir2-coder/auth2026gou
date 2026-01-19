@@ -235,13 +235,21 @@ export default function KeysPage() {
               ))}
             </select>
 
-            <Button variant="secondary" icon={<Filter size={16} />}>
+            <Button
+              variant="secondary"
+              icon={<Filter size={16} />}
+              onClick={() => alert('Filtros: Este recurso permitirá filtrar por status, tipo e data.')}
+            >
               Filtros
             </Button>
           </div>
 
           <div className="toolbar-right">
-            <Button variant="secondary" icon={<Download size={16} />}>
+            <Button
+              variant="secondary"
+              icon={<Download size={16} />}
+              onClick={() => alert('Exportar: Este recurso gerará um arquivo CSV com as chaves selecionadas.')}
+            >
               Exportar
             </Button>
             <Button

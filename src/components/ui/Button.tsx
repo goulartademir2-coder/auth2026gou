@@ -30,7 +30,9 @@ export default function Button({
       disabled={disabled || loading}
       whileHover={{ scale: disabled ? 1 : 1.02 }}
       whileTap={{ scale: disabled ? 1 : 0.98 }}
-      {...props as any}
+      onClick={props.onClick}
+      type={props.type || 'button'}
+      {...(props as any)}
     >
       {loading ? (
         <Loader2 size={18} className="spin" />

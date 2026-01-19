@@ -65,7 +65,8 @@ export function errorResponse(error: ApiError | Error) {
             success: false,
             error: {
                 code: 'INTERNAL_ERROR',
-                message: 'Internal server error',
+                message: error.message || 'Internal server error',
+                stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
             },
         },
         { status: 500 }

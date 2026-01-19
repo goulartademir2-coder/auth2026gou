@@ -1,12 +1,15 @@
 {
-    "name": "gou-auth-frontend",
+    "name": "gou-auth",
     "version": "1.0.0",
     "private": true,
     "scripts": {
         "dev": "next dev",
-        "build": "next build",
+        "build": "prisma generate && next build",
         "start": "next start",
-        "lint": "next lint"
+        "lint": "next lint",
+        "postinstall": "prisma generate",
+        "db:push": "prisma db push",
+        "db:studio": "prisma studio"
     },
     "dependencies": {
         "next": "14.1.0",
@@ -18,12 +21,20 @@
         "date-fns": "^3.3.1",
         "react-hot-toast": "^2.4.1",
         "zustand": "^4.5.0",
-        "clsx": "^2.1.0"
+        "clsx": "^2.1.0",
+        "@prisma/client": "^5.10.0",
+        "argon2": "^0.31.2",
+        "jsonwebtoken": "^9.0.2",
+        "uuid": "^9.0.1",
+        "zod": "^3.22.4"
     },
     "devDependencies": {
         "@types/node": "^20.11.5",
         "@types/react": "^18.2.48",
         "@types/react-dom": "^18.2.18",
-        "typescript": "^5.3.3"
+        "@types/jsonwebtoken": "^9.0.5",
+        "@types/uuid": "^9.0.7",
+        "typescript": "^5.3.3",
+        "prisma": "^5.10.0"
     }
 }

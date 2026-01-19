@@ -1,8 +1,8 @@
-import jwt, { SignOptions } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-me';
-const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '15m') as SignOptions['expiresIn'];
-const JWT_REFRESH_EXPIRES_IN = (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as SignOptions['expiresIn'];
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '15m';
+const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
 interface TokenPayload {
     userId: string;
@@ -14,7 +14,7 @@ export function generateAccessToken(userId: string, sessionId: string): string {
     return jwt.sign(
         { userId, sessionId, type: 'access' },
         JWT_SECRET,
-        { expiresIn: JWT_EXPIRES_IN }
+        { expiresIn: JWT_EXPIRES_IN as any }
     );
 }
 
@@ -22,7 +22,7 @@ export function generateRefreshToken(userId: string, sessionId: string): string 
     return jwt.sign(
         { userId, sessionId, type: 'refresh' },
         JWT_SECRET,
-        { expiresIn: JWT_REFRESH_EXPIRES_IN }
+        { expiresIn: JWT_REFRESH_EXPIRES_IN as any }
     );
 }
 

@@ -27,7 +27,7 @@ export async function POST() {
             data: {
                 username,
                 email,
-                password: hashedPassword,
+                passwordHash: hashedPassword,
                 isSuperAdmin: true
             }
         });

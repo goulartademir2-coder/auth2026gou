@@ -74,12 +74,13 @@ export function errorResponse(error: ApiError | Error) {
     );
 }
 
-export function handleApiError(error: unknown) {
+export function handleApiError(error: any) {
     console.error('API Error:', error);
 
     if (error instanceof ApiError) {
         return errorResponse(error);
     }
 
-    return errorResponse(ApiError.internal());
+    // In debug mode, we want the actual error message
+    return errorResponse(new ApiError(error.message || 'Internal server error', 500, 'INTERNAL_ERROR', { originalError: error.stack }));
 }

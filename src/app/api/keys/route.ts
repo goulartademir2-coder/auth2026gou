@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
         for (let i = 0; i < Math.min(count, 100); i++) {
             const key = await prisma.key.create({
                 data: {
-                    key: generateKey(),
+                    keyValue: generateKey(),
                     appId,
                     keyType,
                     durationDays: keyType === 'LIFETIME' ? null : durationDays,
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
             generated: keys.length,
             keys: keys.map(k => ({
                 id: k.id,
-                key: k.key,
+                key: k.keyValue,
                 keyType: k.keyType,
                 durationDays: k.durationDays,
                 expiresAt: k.expiresAt
@@ -76,7 +76,15 @@ export async function GET(request: NextRequest) {
         ]);
 
         return successResponse({
-            keys,
+            keys: keys.map(k => ({
+                id: k.id,
+                key: k.keyValue,
+                keyType: k.keyType,
+                isActive: k.isActive,
+                user: k.user?.username || null,
+                expiresAt: k.expiresAt,
+                createdAt: k.createdAt
+            })),
             pagination: {
                 page,
                 limit,

@@ -21,19 +21,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify password
-        if (!(await verifyPassword(password, admin.password))) {
+        if (!(await verifyPassword(password, admin.passwordHash))) {
             throw ApiError.unauthorized('Invalid credentials', 'INVALID_CREDENTIALS');
         }
 
         // Generate token
         const sessionId = uuidv4();
         const token = generateAccessToken(admin.id, sessionId);
-
-        // Update last login
-        await prisma.admin.update({
-            where: { id: admin.id },
-            data: { lastLoginAt: new Date() }
-        });
 
         return successResponse({
             token,

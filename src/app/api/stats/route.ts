@@ -24,7 +24,7 @@ export async function GET() {
             prisma.user.count({
                 where: {
                     isBanned: false,
-                    subscriptionExpires: { gt: new Date() }
+                    expiresAt: { gt: new Date() }
                 }
             }),
             prisma.user.count({ where: { isBanned: true } })
@@ -58,9 +58,8 @@ export async function GET() {
                 },
                 recentActivity: recentLogins.map(log => ({
                     user: log.user?.username || 'Unknown',
-                    action: log.action,
                     success: log.success,
-                    ip: log.ip,
+                    ip: log.ipAddress,
                     time: log.createdAt
                 }))
             }

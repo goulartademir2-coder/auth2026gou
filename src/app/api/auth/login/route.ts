@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { hashPassword, verifyPassword, hashHwid, generateKey } from '@/lib/crypto';
+import { verifyPassword, hashHwid } from '@/lib/crypto';
 import { generateAccessToken, generateRefreshToken } from '@/lib/jwt';
 import { successResponse, handleApiError, ApiError } from '@/lib/api-utils';
 import { v4 as uuidv4 } from 'uuid';
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
         // Find app
         const app = await prisma.app.findUnique({ where: { id: appId } });
-        if (!app || !app.isActive) {
+        if (!app || app.status !== 'ONLINE') {
             throw ApiError.notFound('App not found or inactive');
         }
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check password
-        if (!user.password || !(await verifyPassword(password, user.password))) {
+        if (!user.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
             throw ApiError.unauthorized('Invalid credentials', 'INVALID_CREDENTIALS');
         }
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check subscription
-        if (user.subscriptionExpires && new Date(user.subscriptionExpires) < new Date()) {
+        if (user.expiresAt && new Date(user.expiresAt) < new Date()) {
             throw ApiError.forbidden('Subscription expired', 'SUBSCRIPTION_EXPIRED');
         }
 
@@ -66,8 +66,9 @@ export async function POST(request: NextRequest) {
             data: {
                 id: sessionId,
                 userId: user.id,
+                token: uuidv4(),
                 hwid: hwidHash,
-                ip: request.headers.get('x-forwarded-for') || 'unknown',
+                ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
                 expiresAt
             }
         });
@@ -81,9 +82,8 @@ export async function POST(request: NextRequest) {
             data: {
                 userId: user.id,
                 appId,
-                ip: request.headers.get('x-forwarded-for') || 'unknown',
+                ipAddress: request.headers.get('x-forwarded-for') || 'unknown',
                 hwid: hwidHash,
-                action: 'LOGIN',
                 success: true
             }
         });
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
                 id: user.id,
                 username: user.username,
                 email: user.email,
-                subscriptionExpires: user.subscriptionExpires
+                expiresAt: user.expiresAt
             }
         });
 

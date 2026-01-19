@@ -9,325 +9,412 @@ import Modal from '@/components/ui/Modal';
 import { Search, Plus, Copy, Check, Power, RotateCcw, Trash2, Filter, Download, Clock, Infinity, Hash } from 'lucide-react';
 
 export default function KeysPage() {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showGenerateModal, setShowGenerateModal] = useState(false);
-    const [copiedKey, setCopiedKey] = useState<string | null>(null);
-    const [generatingKeys, setGeneratingKeys] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [generatingKeys, setGeneratingKeys] = useState(false);
+  const [keys, setKeys] = useState<any[]>([]);
+  const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
+  const [loading, setLoading] = useState(true);
+  const [apps, setApps] = useState<any[]>([]);
+  const [selectedAppId, setSelectedAppId] = useState('');
 
-    const keys = [
-        { id: '1', keyValue: 'GOU-A1B2-C3D4-E5F6', type: 'TIME', duration: '30 dias', status: 'active', user: 'usuario123', activatedAt: '2026-01-10' },
-        { id: '2', keyValue: 'GOU-G7H8-I9J0-K1L2', type: 'LIFETIME', duration: 'Lifetime', status: 'active', user: 'player456', activatedAt: '2026-01-08' },
-        { id: '3', keyValue: 'GOU-M3N4-O5P6-Q7R8', type: 'TIME', duration: '7 dias', status: 'expired', user: 'gamer789', activatedAt: '2026-01-01' },
-        { id: '4', keyValue: 'GOU-S9T0-U1V2-W3X4', type: 'USES', duration: '10 usos', status: 'unused', user: null, activatedAt: null },
-        { id: '5', keyValue: 'GOU-Y5Z6-A7B8-C9D0', type: 'TIME', duration: '30 dias', status: 'disabled', user: null, activatedAt: null },
-    ];
+  const fetchKeys = async (page = 1, search = '') => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/keys?page=${page}&limit=10&search=${search}${selectedAppId ? `&appId=${selectedAppId}` : ''}`);
+      const data = await res.json();
+      if (data.success) {
+        setKeys(data.data.keys);
+        setPagination(data.data.pagination);
+      }
+    } catch (error) {
+      console.error('Error fetching keys:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const copyKey = async (key: string) => {
-        await navigator.clipboard.writeText(key);
-        setCopiedKey(key);
-        setTimeout(() => setCopiedKey(null), 2000);
-    };
+  const fetchApps = async () => {
+    try {
+      const res = await fetch('/api/apps');
+      const data = await res.json();
+      if (data.success) {
+        setApps(data.data.apps);
+        if (data.data.apps.length > 0) setSelectedAppId(data.data.apps[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching apps:', error);
+    }
+  };
 
-    const handleGenerateKeys = async () => {
-        setGeneratingKeys(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setGeneratingKeys(false);
+  useEffect(() => {
+    fetchApps();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchKeys(1, searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedAppId]);
+
+  const copyKey = async (key: string) => {
+    await navigator.clipboard.writeText(key);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleGenerateKeys = async (formData: any) => {
+    setGeneratingKeys(true);
+    try {
+      const res = await fetch('/api/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, appId: selectedAppId })
+      });
+      const data = await res.json();
+      if (data.success) {
         setShowGenerateModal(false);
-    };
+        fetchKeys(1);
+      }
+    } catch (error) {
+      console.error('Error generating keys:', error);
+    } finally {
+      setGeneratingKeys(false);
+    }
+  };
 
-    const getTypeIcon = (type: string) => {
-        switch (type) {
-            case 'TIME': return <Clock size={14} />;
-            case 'LIFETIME': return <Infinity size={14} />;
-            case 'USES': return <Hash size={14} />;
-            default: return null;
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      fetchKeys(newPage, searchQuery);
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'TIME': return <Clock size={14} />;
+      case 'LIFETIME': return <Infinity size={14} />;
+      case 'USES': return <Hash size={14} />;
+      default: return null;
+    }
+  };
+
+  const columns = [
+    {
+      key: 'key',
+      header: 'Chave',
+      render: (item: any) => (
+        <div className="key-cell">
+          <code className="key-code">{item.key}</code>
+          <motion.button
+            className="copy-btn"
+            onClick={(e: any) => {
+              e.stopPropagation();
+              copyKey(item.key);
+            }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            {copiedKey === item.key ? <Check size={14} /> : <Copy size={14} />}
+          </motion.button>
+        </div>
+      )
+    },
+    {
+      key: 'keyType',
+      header: 'Tipo',
+      render: (item: any) => (
+        <div className="type-badge">
+          {getTypeIcon(item.keyType)}
+          <span>{item.keyType}</span>
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (item: any) => {
+        const isExpired = item.expiresAt && new Date(item.expiresAt) < new Date();
+        const status = item.isActive
+          ? (isExpired ? { label: 'Expirado', class: 'warning' } : { label: 'Ativo', class: 'success' })
+          : { label: 'Desativado', class: 'danger' };
+
+        if (!item.user && item.isActive) {
+          return <span className="badge badge-info">Não usado</span>;
         }
-    };
 
-    const columns = [
-        {
-            key: 'keyValue',
-            header: 'Chave',
-            render: (item: any) => (
-                <div className="key-cell">
-                    <code className="key-code">{item.keyValue}</code>
-                    <motion.button
-                        className="copy-btn"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            copyKey(item.keyValue);
-                        }}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                        {copiedKey === item.keyValue ? <Check size={14} /> : <Copy size={14} />}
-                    </motion.button>
-                </div>
-            )
-        },
-        {
-            key: 'type',
-            header: 'Tipo',
-            render: (item: any) => (
-                <div className="type-badge">
-                    {getTypeIcon(item.type)}
-                    <span>{item.type}</span>
-                </div>
-            )
-        },
-        { key: 'duration', header: 'Duração' },
-        {
-            key: 'status',
-            header: 'Status',
-            render: (item: any) => {
-                const statusMap: Record<string, { label: string, class: string }> = {
-                    active: { label: 'Ativo', class: 'success' },
-                    unused: { label: 'Não usado', class: 'info' },
-                    expired: { label: 'Expirado', class: 'warning' },
-                    disabled: { label: 'Desativado', class: 'danger' }
-                };
-                const status = statusMap[item.status];
-                return <span className={`badge badge-${status.class}`}>{status.label}</span>;
-            }
-        },
-        {
-            key: 'user',
-            header: 'Usuário',
-            render: (item: any) => (
-                <span className={item.user ? '' : 'text-muted'}>
-                    {item.user || '—'}
-                </span>
-            )
-        },
-        {
-            key: 'activatedAt',
-            header: 'Ativado em',
-            render: (item: any) => (
-                <span className={item.activatedAt ? '' : 'text-muted'}>
-                    {item.activatedAt || '—'}
-                </span>
-            )
-        },
-        {
-            key: 'actions',
-            header: 'Ações',
-            render: (item: any) => (
-                <div className="actions-cell">
-                    {item.user && (
-                        <motion.button
-                            className="action-btn"
-                            title="Resetar HWID"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                        >
-                            <RotateCcw size={16} />
-                        </motion.button>
-                    )}
-                    <motion.button
-                        className="action-btn"
-                        title={item.status === 'disabled' ? 'Ativar' : 'Desativar'}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                        <Power size={16} />
-                    </motion.button>
-                    <motion.button
-                        className="action-btn danger"
-                        title="Excluir"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                        <Trash2 size={16} />
-                    </motion.button>
-                </div>
-            )
-        }
-    ];
+        return <span className={`badge badge-${status.class}`}>{status.label}</span>;
+      }
+    },
+    {
+      key: 'user',
+      header: 'Usuário',
+      render: (item: any) => (
+        <span className={item.user ? '' : 'text-muted'}>
+          {item.user || '—'}
+        </span>
+      )
+    },
+    {
+      key: 'createdAt',
+      header: 'Criado em',
+      render: (item: any) => (
+        <span className="text-muted">
+          {new Date(item.createdAt).toLocaleDateString()}
+        </span>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Ações',
+      render: (item: any) => (
+        <div className="actions-cell">
+          {item.user && (
+            <motion.button
+              className="action-btn"
+              title="Resetar HWID"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <RotateCcw size={16} />
+            </motion.button>
+          )}
+          <motion.button
+            className="action-btn"
+            title={!item.isActive ? 'Ativar' : 'Desativar'}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Power size={16} />
+          </motion.button>
+          <motion.button
+            className="action-btn danger"
+            title="Excluir"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Trash2 size={16} />
+          </motion.button>
+        </div>
+      )
+    }
+  ];
 
-    return (
-        <>
-            <Header title="Licenças" subtitle="Gerencie as chaves de licença" />
+  return (
+    <>
+      <Header title="Licenças" subtitle="Gerencie as chaves de licença" />
 
-            <div className="page-content">
-                {/* Toolbar */}
-                <motion.div
-                    className="toolbar"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <div className="toolbar-left">
-                        <div className="search-box">
-                            <Search size={18} className="search-icon" />
-                            <input
-                                type="text"
-                                placeholder="Buscar chaves..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="search-input"
-                            />
-                        </div>
-
-                        <Button variant="secondary" icon={<Filter size={16} />}>
-                            Filtros
-                        </Button>
-                    </div>
-
-                    <div className="toolbar-right">
-                        <Button variant="secondary" icon={<Download size={16} />}>
-                            Exportar
-                        </Button>
-                        <Button
-                            variant="primary"
-                            icon={<Plus size={16} />}
-                            onClick={() => setShowGenerateModal(true)}
-                        >
-                            Gerar Keys
-                        </Button>
-                    </div>
-                </motion.div>
-
-                {/* Stats Bar */}
-                <motion.div
-                    className="stats-bar"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <div className="stat-item">
-                        <span className="stat-value">856</span>
-                        <span className="stat-label">Total</span>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="stat-item">
-                        <span className="stat-value info">324</span>
-                        <span className="stat-label">Disponíveis</span>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="stat-item">
-                        <span className="stat-value success">489</span>
-                        <span className="stat-label">Ativadas</span>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="stat-item">
-                        <span className="stat-value warning">43</span>
-                        <span className="stat-label">Expiradas</span>
-                    </div>
-                </motion.div>
-
-                {/* Table */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                >
-                    <DataTable
-                        columns={columns}
-                        data={keys}
-                        keyExtractor={(item) => item.id}
-                    />
-                </motion.div>
-
-                {/* Pagination */}
-                <motion.div
-                    className="pagination"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                >
-                    <span className="pagination-info">Mostrando 1-5 de 856</span>
-                    <div className="pagination-buttons">
-                        <button className="page-btn">←</button>
-                        <button className="page-btn active">1</button>
-                        <button className="page-btn">2</button>
-                        <button className="page-btn">3</button>
-                        <span className="page-dots">...</span>
-                        <button className="page-btn">172</button>
-                        <button className="page-btn">→</button>
-                    </div>
-                </motion.div>
+      <div className="page-content">
+        {/* Toolbar */}
+        <motion.div
+          className="toolbar"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="toolbar-left">
+            <div className="search-box">
+              <Search size={18} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Buscar chaves..."
+                value={searchQuery}
+                onChange={(e: any) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
             </div>
 
-            {/* Generate Keys Modal */}
-            <Modal
-                isOpen={showGenerateModal}
-                onClose={() => setShowGenerateModal(false)}
-                title="Gerar Novas Keys"
-                size="md"
+            <select
+              className="input select-app"
+              value={selectedAppId}
+              onChange={(e) => setSelectedAppId(e.target.value)}
+              style={{ padding: '10px 14px', background: 'var(--color-bg-tertiary)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: '0.875rem', width: '200px' }}
             >
-                <div className="generate-form">
-                    <div className="form-row">
-                        <div className="input-group">
-                            <label className="input-label">Quantidade</label>
-                            <input
-                                type="number"
-                                className="input"
-                                placeholder="10"
-                                min="1"
-                                max="100"
-                                defaultValue="10"
-                            />
-                        </div>
+              {apps.map(app => (
+                <option key={app.id} value={app.id}>{app.name}</option>
+              ))}
+            </select>
 
-                        <div className="input-group">
-                            <label className="input-label">Tipo</label>
-                            <select className="input">
-                                <option value="TIME">Tempo Limitado</option>
-                                <option value="LIFETIME">Lifetime</option>
-                                <option value="USES">Por Usos</option>
-                            </select>
-                        </div>
-                    </div>
+            <Button variant="secondary" icon={<Filter size={16} />}>
+              Filtros
+            </Button>
+          </div>
 
-                    <div className="form-row">
-                        <div className="input-group">
-                            <label className="input-label">Duração (dias)</label>
-                            <input
-                                type="number"
-                                className="input"
-                                placeholder="30"
-                                min="1"
-                                defaultValue="30"
-                            />
-                        </div>
+          <div className="toolbar-right">
+            <Button variant="secondary" icon={<Download size={16} />}>
+              Exportar
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Plus size={16} />}
+              onClick={() => setShowGenerateModal(true)}
+            >
+              Gerar Keys
+            </Button>
+          </div>
+        </motion.div>
 
-                        <div className="input-group">
-                            <label className="input-label">Max. Ativações</label>
-                            <input
-                                type="number"
-                                className="input"
-                                placeholder="1"
-                                min="1"
-                                defaultValue="1"
-                            />
-                        </div>
-                    </div>
+        {/* Stats Bar */}
+        <motion.div
+          className="stats-bar"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="stat-item">
+            <span className="stat-value">{pagination.total}</span>
+            <span className="stat-label">Total</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value info">{keys.filter(k => !k.user && k.isActive).length}</span>
+            <span className="stat-label">Nesta Página (Disp.)</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value success">{keys.filter(k => k.user).length}</span>
+            <span className="stat-label">Nesta Página (Ativadas)</span>
+          </div>
+        </motion.div>
 
-                    <div className="input-group">
-                        <label className="input-label">Nota (opcional)</label>
-                        <input
-                            type="text"
-                            className="input"
-                            placeholder="Descrição para identificar este lote"
-                        />
-                    </div>
+        {/* Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <DataTable
+            columns={columns}
+            data={keys}
+            keyExtractor={(item) => item.id}
+          />
+        </motion.div>
 
-                    <div className="modal-actions">
-                        <Button variant="secondary" onClick={() => setShowGenerateModal(false)}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="primary"
-                            loading={generatingKeys}
-                            onClick={handleGenerateKeys}
-                        >
-                            Gerar Keys
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+        {/* Pagination */}
+        <motion.div
+          className="pagination"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <span className="pagination-info">Mostrando {keys.length} de {pagination.total}</span>
+          <div className="pagination-buttons">
+            <button
+              className="page-btn"
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page === 1}
+            >
+              ←
+            </button>
+            <button className="page-btn active">{pagination.page}</button>
+            <button
+              className="page-btn"
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page === pagination.pages}
+            >
+              →
+            </button>
+          </div>
+        </motion.div>
+      </div>
 
-            <style jsx>{`
+      {/* Generate Keys Modal */}
+      <Modal
+        isOpen={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        title="Gerar Novas Keys"
+        size="md"
+      >
+        <div className="generate-form">
+          <div className="form-row">
+            <div className="input-group">
+              <label className="input-label">Quantidade</label>
+              <input
+                id="gen-count"
+                type="number"
+                className="input"
+                placeholder="10"
+                min="1"
+                max="100"
+                defaultValue="10"
+              />
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Tipo</label>
+              <select id="gen-type" className="input">
+                <option value="TIME">Tempo Limitado</option>
+                <option value="LIFETIME">Lifetime</option>
+                <option value="USES">Por Usos</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="input-group">
+              <label className="input-label">Duração (dias)</label>
+              <input
+                id="gen-duration"
+                type="number"
+                className="input"
+                placeholder="30"
+                min="1"
+                defaultValue="30"
+              />
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Max. Ativações</label>
+              <input
+                id="gen-max-activations"
+                type="number"
+                className="input"
+                placeholder="1"
+                min="1"
+                defaultValue="1"
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Nota (opcional)</label>
+            <input
+              id="gen-note"
+              type="text"
+              className="input"
+              placeholder="Descrição para identificar este lote"
+            />
+          </div>
+
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={() => setShowGenerateModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              loading={generatingKeys}
+              onClick={() => {
+                const count = (document.getElementById('gen-count') as HTMLInputElement).value;
+                const keyType = (document.getElementById('gen-type') as HTMLSelectElement).value;
+                const durationDays = (document.getElementById('gen-duration') as HTMLInputElement).value;
+                const maxActivations = (document.getElementById('gen-max-activations') as HTMLInputElement).value;
+                const note = (document.getElementById('gen-note') as HTMLInputElement).value;
+                handleGenerateKeys({
+                  count: parseInt(count),
+                  keyType,
+                  durationDays: parseInt(durationDays),
+                  maxActivations: parseInt(maxActivations),
+                  note
+                });
+              }}
+            >
+              Gerar Keys
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <style jsx>{`
         .page-content {
           padding: 24px 32px;
           display: flex;
@@ -621,6 +708,6 @@ export default function KeysPage() {
           }
         }
       `}</style>
-        </>
-    );
+    </>
+  );
 }

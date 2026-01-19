@@ -9,44 +9,44 @@ import { Users, Key, Box, Activity, TrendingUp, Clock, UserCheck, ShieldCheck } 
 
 // Chart component with animation
 function MiniChart({ data, color }: { data: number[], color: string }) {
-    const max = Math.max(...data);
-    const min = Math.min(...data);
-    const range = max - min || 1;
+  const max = Math.max(...data);
+  const min = Math.min(...data);
+  const range = max - min || 1;
 
-    return (
-        <div className="mini-chart">
-            <svg viewBox="0 0 100 40" preserveAspectRatio="none">
-                <defs>
-                    <linearGradient id={`chartGrad-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor={color} stopOpacity="0.3" />
-                        <stop offset="100%" stopColor={color} stopOpacity="0" />
-                    </linearGradient>
-                </defs>
+  return (
+    <div className="mini-chart">
+      <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={`chartGrad-${color}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
 
-                <motion.path
-                    d={`M 0 40 ${data.map((d, i) =>
-                        `L ${(i / (data.length - 1)) * 100} ${40 - ((d - min) / range) * 35}`
-                    ).join(' ')} L 100 40 Z`}
-                    fill={`url(#chartGrad-${color})`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                />
+        <motion.path
+          d={`M 0 40 ${data.map((d, i) =>
+            `L ${(i / (data.length - 1)) * 100} ${40 - ((d - min) / range) * 35}`
+          ).join(' ')} L 100 40 Z`}
+          fill={`url(#chartGrad-${color})`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        />
 
-                <motion.path
-                    d={`M 0 ${40 - ((data[0] - min) / range) * 35} ${data.map((d, i) =>
-                        `L ${(i / (data.length - 1)) * 100} ${40 - ((d - min) / range) * 35}`
-                    ).join(' ')}`}
-                    stroke={color}
-                    strokeWidth="2"
-                    fill="none"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 1, delay: 0.3 }}
-                />
-            </svg>
+        <motion.path
+          d={`M 0 ${40 - ((data[0] - min) / range) * 35} ${data.map((d, i) =>
+            `L ${(i / (data.length - 1)) * 100} ${40 - ((d - min) / range) * 35}`
+          ).join(' ')}`}
+          stroke={color}
+          strokeWidth="2"
+          fill="none"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1, delay: 0.3 }}
+        />
+      </svg>
 
-            <style jsx>{`
+      <style jsx>{`
         .mini-chart {
           height: 60px;
           width: 100%;
@@ -57,27 +57,27 @@ function MiniChart({ data, color }: { data: number[], color: string }) {
           height: 100%;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
 
 // Activity item component
 function ActivityItem({ icon: Icon, title, description, time, color }: any) {
-    return (
-        <motion.div
-            className="activity-item"
-            whileHover={{ x: 4 }}
-        >
-            <div className="activity-icon" style={{ background: color }}>
-                <Icon size={16} />
-            </div>
-            <div className="activity-content">
-                <p className="activity-title">{title}</p>
-                <p className="activity-desc">{description}</p>
-            </div>
-            <span className="activity-time">{time}</span>
+  return (
+    <motion.div
+      className="activity-item"
+      whileHover={{ x: 4 }}
+    >
+      <div className="activity-icon" style={{ background: color }}>
+        <Icon size={16} />
+      </div>
+      <div className="activity-content">
+        <p className="activity-title">{title}</p>
+        <p className="activity-desc">{description}</p>
+      </div>
+      <span className="activity-time">{time}</span>
 
-            <style jsx>{`
+      <style jsx>{`
         .activity-item {
           display: flex;
           align-items: center;
@@ -125,171 +125,202 @@ function ActivityItem({ icon: Icon, title, description, time, color }: any) {
           flex-shrink: 0;
         }
       `}</style>
-        </motion.div>
-    );
+    </motion.div>
+  );
 }
 
 export default function DashboardPage() {
-    const [stats, setStats] = useState({
-        users: 1247,
-        keys: 856,
-        apps: 3,
-        online: 48
-    });
+  const [stats, setStats] = useState({
+    users: 0,
+    keys: 0,
+    apps: 0,
+    online: 0
+  });
+  const [recentUsers, setRecentUsers] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    const chartData = [10, 15, 12, 25, 20, 35, 30, 45, 40, 52, 48, 55];
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [statsRes, usersRes] = await Promise.all([
+          fetch('/api/stats'),
+          fetch('/api/users?limit=5')
+        ]);
 
-    const recentUsers = [
-        { id: '1', username: 'usuario123', email: 'user@email.com', status: 'active', createdAt: '2026-01-19' },
-        { id: '2', username: 'player456', email: 'player@email.com', status: 'active', createdAt: '2026-01-18' },
-        { id: '3', username: 'gamer789', email: 'gamer@email.com', status: 'banned', createdAt: '2026-01-18' },
-        { id: '4', username: 'test_user', email: 'test@email.com', status: 'expired', createdAt: '2026-01-17' },
-        { id: '5', username: 'new_member', email: 'new@email.com', status: 'active', createdAt: '2026-01-17' },
-    ];
+        const statsData = await statsRes.json();
+        const usersData = await usersRes.json();
 
-    const activities = [
-        { icon: UserCheck, title: 'Novo usuário registrado', description: 'usuario123 se registrou', time: '2min', color: 'linear-gradient(135deg, #10B981, #059669)' },
-        { icon: Key, title: 'Key ativada', description: 'GOU-XXXX-XXXX-XXXX ativada por player456', time: '5min', color: 'linear-gradient(135deg, #8B5CF6, #7C3AED)' },
-        { icon: ShieldCheck, title: 'Login bem-sucedido', description: 'admin fez login no painel', time: '15min', color: 'linear-gradient(135deg, #3B82F6, #2563EB)' },
-        { icon: Activity, title: 'HWID resetado', description: 'Reset para gamer789', time: '1h', color: 'linear-gradient(135deg, #F59E0B, #D97706)' },
-    ];
+        if (statsData.success) {
+          setStats({
+            users: statsData.data.stats.users,
+            keys: statsData.data.stats.keys,
+            apps: statsData.data.stats.apps,
+            online: statsData.data.stats.activeSessions
+          });
 
-    return (
-        <>
-            <Header title="Dashboard" subtitle="Bem-vindo de volta, Admin" />
+          // Map activities from login logs
+          const mappedActivities = statsData.data.recentActivity.map((log: any) => ({
+            icon: log.success ? ShieldCheck : Activity,
+            title: log.success ? 'Login bem-sucedido' : 'Tentativa de login',
+            description: `${log.user} fez login via IP ${log.ip}`,
+            time: new Date(log.time).toLocaleTimeString(), // Simplified time
+            color: log.success ? 'linear-gradient(135deg, #3B82F6, #2563EB)' : 'linear-gradient(135deg, #EF4444, #DC2626)'
+          }));
+          setActivities(mappedActivities);
+        }
 
-            <div className="dashboard-content">
-                {/* Stats Grid */}
-                <div className="stats-grid">
-                    <StatsCard
-                        icon={Users}
-                        label="Total de Usuários"
-                        value={stats.users}
-                        trend={{ value: 12, isPositive: true }}
-                        color="purple"
-                        index={0}
-                    />
-                    <StatsCard
-                        icon={Key}
-                        label="Keys Ativas"
-                        value={stats.keys}
-                        trend={{ value: 8, isPositive: true }}
-                        color="blue"
-                        index={1}
-                    />
-                    <StatsCard
-                        icon={Box}
-                        label="Apps Ativos"
-                        value={stats.apps}
-                        color="green"
-                        index={2}
-                    />
-                    <StatsCard
-                        icon={Activity}
-                        label="Usuários Online"
-                        value={stats.online}
-                        trend={{ value: 5, isPositive: false }}
-                        color="pink"
-                        index={3}
-                    />
-                </div>
+        if (usersData.success) {
+          setRecentUsers(usersData.data.users);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-                {/* Charts Row */}
-                <div className="charts-row">
-                    <motion.div
-                        className="chart-card"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 }}
-                    >
-                        <div className="chart-header">
-                            <h3>Logins por Dia</h3>
-                            <div className="chart-badge">
-                                <TrendingUp size={14} />
-                                <span>+23% esta semana</span>
-                            </div>
-                        </div>
-                        <MiniChart data={chartData} color="#8B5CF6" />
-                    </motion.div>
+    fetchDashboardData();
+  }, []);
 
-                    <motion.div
-                        className="chart-card"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 }}
-                    >
-                        <div className="chart-header">
-                            <h3>Keys Ativadas</h3>
-                            <div className="chart-badge green">
-                                <TrendingUp size={14} />
-                                <span>+15% esta semana</span>
-                            </div>
-                        </div>
-                        <MiniChart data={[5, 8, 12, 10, 15, 20, 18, 25, 22, 30, 28, 35]} color="#10B981" />
-                    </motion.div>
-                </div>
+  const chartData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]; // Keeping static for now or can be derived from logs
 
-                {/* Content Row */}
-                <div className="content-row">
-                    {/* Recent Users */}
-                    <motion.div
-                        className="content-card users-card"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.6 }}
-                    >
-                        <div className="card-header">
-                            <h3>Usuários Recentes</h3>
-                            <a href="/dashboard/users" className="view-all">Ver todos →</a>
-                        </div>
-                        <DataTable
-                            columns={[
-                                { key: 'username', header: 'Usuário' },
-                                { key: 'email', header: 'Email' },
-                                {
-                                    key: 'status',
-                                    header: 'Status',
-                                    render: (item: any) => (
-                                        <span className={`badge badge-${item.status === 'active' ? 'success' : item.status === 'banned' ? 'danger' : 'warning'}`}>
-                                            {item.status === 'active' ? 'Ativo' : item.status === 'banned' ? 'Banido' : 'Expirado'}
-                                        </span>
-                                    )
-                                },
-                                { key: 'createdAt', header: 'Criado em' }
-                            ]}
-                            data={recentUsers}
-                            keyExtractor={(item) => item.id}
-                        />
-                    </motion.div>
+  return (
+    <>
+      <Header title="Dashboard" subtitle="Bem-vindo de volta, Admin" />
 
-                    {/* Activity Feed */}
-                    <motion.div
-                        className="content-card activity-card"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.7 }}
-                    >
-                        <div className="card-header">
-                            <h3>Atividade Recente</h3>
-                            <Clock size={16} className="header-icon" />
-                        </div>
-                        <div className="activity-list">
-                            {activities.map((activity, index) => (
-                                <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.8 + index * 0.1 }}
-                                >
-                                    <ActivityItem {...activity} />
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </div>
+      <div className="dashboard-content">
+        {/* Stats Grid */}
+        <div className="stats-grid">
+          <StatsCard
+            icon={Users}
+            label="Total de Usuários"
+            value={stats.users}
+            trend={{ value: 12, isPositive: true }}
+            color="purple"
+            index={0}
+          />
+          <StatsCard
+            icon={Key}
+            label="Keys Ativas"
+            value={stats.keys}
+            trend={{ value: 8, isPositive: true }}
+            color="blue"
+            index={1}
+          />
+          <StatsCard
+            icon={Box}
+            label="Apps Ativos"
+            value={stats.apps}
+            color="green"
+            index={2}
+          />
+          <StatsCard
+            icon={Activity}
+            label="Usuários Online"
+            value={stats.online}
+            trend={{ value: 5, isPositive: false }}
+            color="pink"
+            index={3}
+          />
+        </div>
+
+        {/* Charts Row */}
+        <div className="charts-row">
+          <motion.div
+            className="chart-card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="chart-header">
+              <h3>Logins por Dia</h3>
+              <div className="chart-badge">
+                <TrendingUp size={14} />
+                <span>+23% esta semana</span>
+              </div>
             </div>
+            <MiniChart data={chartData} color="#8B5CF6" />
+          </motion.div>
 
-            <style jsx>{`
+          <motion.div
+            className="chart-card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <div className="chart-header">
+              <h3>Keys Ativadas</h3>
+              <div className="chart-badge green">
+                <TrendingUp size={14} />
+                <span>+15% esta semana</span>
+              </div>
+            </div>
+            <MiniChart data={[5, 8, 12, 10, 15, 20, 18, 25, 22, 30, 28, 35]} color="#10B981" />
+          </motion.div>
+        </div>
+
+        {/* Content Row */}
+        <div className="content-row">
+          {/* Recent Users */}
+          <motion.div
+            className="content-card users-card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="card-header">
+              <h3>Usuários Recentes</h3>
+              <a href="/dashboard/users" className="view-all">Ver todos →</a>
+            </div>
+            <DataTable
+              columns={[
+                { key: 'username', header: 'Usuário' },
+                { key: 'email', header: 'Email' },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: (item: any) => (
+                    <span className={`badge badge-${item.status === 'active' ? 'success' : item.status === 'banned' ? 'danger' : 'warning'}`}>
+                      {item.status === 'active' ? 'Ativo' : item.status === 'banned' ? 'Banido' : 'Expirado'}
+                    </span>
+                  )
+                },
+                { key: 'createdAt', header: 'Criado em' }
+              ]}
+              data={recentUsers}
+              keyExtractor={(item) => item.id}
+            />
+          </motion.div>
+
+          {/* Activity Feed */}
+          <motion.div
+            className="content-card activity-card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+          >
+            <div className="card-header">
+              <h3>Atividade Recente</h3>
+              <Clock size={16} className="header-icon" />
+            </div>
+            <div className="activity-list">
+              {activities.map((activity, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.8 + index * 0.1 }}
+                >
+                  <ActivityItem {...activity} />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      <style jsx>{`
         .dashboard-content {
           padding: 24px 32px;
           display: flex;
@@ -412,6 +443,6 @@ export default function DashboardPage() {
           }
         }
       `}</style>
-        </>
-    );
+    </>
+  );
 }

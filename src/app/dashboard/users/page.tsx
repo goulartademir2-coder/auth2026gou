@@ -9,237 +9,270 @@ import Modal from '@/components/ui/Modal';
 import { Search, Plus, Ban, Unlock, RotateCcw, Trash2, Filter, Download } from 'lucide-react';
 
 export default function UsersPage() {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showBanModal, setShowBanModal] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([]);
+  const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
+  const [loading, setLoading] = useState(true);
 
-    const users = [
-        { id: '1', username: 'usuario123', email: 'user@email.com', hwid: 'ABC123...', status: 'active', expiresAt: '2026-06-19', loginCount: 45 },
-        { id: '2', username: 'player456', email: 'player@email.com', hwid: 'DEF456...', status: 'active', expiresAt: '2026-03-15', loginCount: 32 },
-        { id: '3', username: 'gamer789', email: 'gamer@email.com', hwid: 'GHI789...', status: 'banned', expiresAt: '2026-04-20', loginCount: 12 },
-        { id: '4', username: 'pro_user', email: 'pro@email.com', hwid: 'JKL012...', status: 'expired', expiresAt: '2025-12-01', loginCount: 89 },
-        { id: '5', username: 'new_member', email: 'new@email.com', hwid: null, status: 'active', expiresAt: '2026-07-30', loginCount: 5 },
-    ];
+  const fetchUsers = async (page = 1, search = '') => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/users?page=${page}&limit=10&search=${search}`);
+      const data = await res.json();
+      if (data.success) {
+        setUsers(data.data.users);
+        setPagination(data.data.pagination);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const columns = [
-        {
-            key: 'username',
-            header: 'Usuário',
-            render: (item: any) => (
-                <div className="user-cell">
-                    <div className="user-avatar">
-                        {item.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="user-info">
-                        <span className="user-name">{item.username}</span>
-                        <span className="user-email">{item.email}</span>
-                    </div>
-                </div>
-            )
-        },
-        {
-            key: 'hwid',
-            header: 'HWID',
-            render: (item: any) => (
-                <span className="hwid-cell">{item.hwid || '—'}</span>
-            )
-        },
-        {
-            key: 'status',
-            header: 'Status',
-            render: (item: any) => (
-                <span className={`badge badge-${item.status === 'active' ? 'success' : item.status === 'banned' ? 'danger' : 'warning'}`}>
-                    {item.status === 'active' ? 'Ativo' : item.status === 'banned' ? 'Banido' : 'Expirado'}
-                </span>
-            )
-        },
-        { key: 'expiresAt', header: 'Expira em' },
-        {
-            key: 'loginCount',
-            header: 'Logins',
-            render: (item: any) => (
-                <span className="login-count">{item.loginCount}</span>
-            )
-        },
-        {
-            key: 'actions',
-            header: 'Ações',
-            render: (item: any) => (
-                <div className="actions-cell">
-                    <motion.button
-                        className="action-btn"
-                        title="Resetar HWID"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                        <RotateCcw size={16} />
-                    </motion.button>
-                    <motion.button
-                        className="action-btn"
-                        title={item.status === 'banned' ? 'Desbanir' : 'Banir'}
-                        onClick={() => {
-                            setSelectedUser(item);
-                            setShowBanModal(true);
-                        }}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                        {item.status === 'banned' ? <Unlock size={16} /> : <Ban size={16} />}
-                    </motion.button>
-                    <motion.button
-                        className="action-btn danger"
-                        title="Excluir"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                    >
-                        <Trash2 size={16} />
-                    </motion.button>
-                </div>
-            )
-        }
-    ];
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers(1, searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-    return (
-        <>
-            <Header title="Usuários" subtitle="Gerencie os usuários do sistema" />
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= pagination.pages) {
+      fetchUsers(newPage, searchQuery);
+    }
+  };
 
-            <div className="page-content">
-                {/* Toolbar */}
-                <motion.div
-                    className="toolbar"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <div className="toolbar-left">
-                        <div className="search-box">
-                            <Search size={18} className="search-icon" />
-                            <input
-                                type="text"
-                                placeholder="Buscar usuários..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="search-input"
-                            />
-                        </div>
+  const columns = [
+    {
+      key: 'username',
+      header: 'Usuário',
+      render: (item: any) => (
+        <div className="user-cell">
+          <div className="user-avatar">
+            {item.username.charAt(0).toUpperCase()}
+          </div>
+          <div className="user-info">
+            <span className="user-name">{item.username}</span>
+            <span className="user-email">{item.email}</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'hwid',
+      header: 'HWID',
+      render: (item: any) => (
+        <span className="hwid-cell">{item.hwid || '—'}</span>
+      )
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (item: any) => (
+        <span className={`badge badge-${item.status === 'active' ? 'success' : item.status === 'banned' ? 'danger' : 'warning'}`}>
+          {item.status === 'active' ? 'Ativo' : item.status === 'banned' ? 'Banido' : 'Expirado'}
+        </span>
+      )
+    },
+    { key: 'expiresAt', header: 'Expira em' },
+    {
+      key: 'loginCount',
+      header: 'Logins',
+      render: (item: any) => (
+        <span className="login-count">{item.loginCount}</span>
+      )
+    },
+    {
+      key: 'actions',
+      header: 'Ações',
+      render: (item: any) => (
+        <div className="actions-cell">
+          <motion.button
+            className="action-btn"
+            title="Resetar HWID"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <RotateCcw size={16} />
+          </motion.button>
+          <motion.button
+            className="action-btn"
+            title={item.status === 'banned' ? 'Desbanir' : 'Banir'}
+            onClick={() => {
+              setSelectedUser(item);
+              setShowBanModal(true);
+            }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            {item.status === 'banned' ? <Unlock size={16} /> : <Ban size={16} />}
+          </motion.button>
+          <motion.button
+            className="action-btn danger"
+            title="Excluir"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <Trash2 size={16} />
+          </motion.button>
+        </div>
+      )
+    }
+  ];
 
-                        <Button variant="secondary" icon={<Filter size={16} />}>
-                            Filtros
-                        </Button>
-                    </div>
+  return (
+    <>
+      <Header title="Usuários" subtitle="Gerencie os usuários do sistema" />
 
-                    <div className="toolbar-right">
-                        <Button variant="secondary" icon={<Download size={16} />}>
-                            Exportar
-                        </Button>
-                        <Button variant="primary" icon={<Plus size={16} />}>
-                            Novo Usuário
-                        </Button>
-                    </div>
-                </motion.div>
-
-                {/* Stats Bar */}
-                <motion.div
-                    className="stats-bar"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <div className="stat-item">
-                        <span className="stat-value">1,247</span>
-                        <span className="stat-label">Total</span>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="stat-item">
-                        <span className="stat-value success">1,089</span>
-                        <span className="stat-label">Ativos</span>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="stat-item">
-                        <span className="stat-value warning">98</span>
-                        <span className="stat-label">Expirados</span>
-                    </div>
-                    <div className="stat-divider" />
-                    <div className="stat-item">
-                        <span className="stat-value danger">60</span>
-                        <span className="stat-label">Banidos</span>
-                    </div>
-                </motion.div>
-
-                {/* Table */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                >
-                    <DataTable
-                        columns={columns}
-                        data={users}
-                        keyExtractor={(item) => item.id}
-                        onRowClick={(item) => console.log('Clicked:', item)}
-                    />
-                </motion.div>
-
-                {/* Pagination */}
-                <motion.div
-                    className="pagination"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                >
-                    <span className="pagination-info">Mostrando 1-5 de 1,247</span>
-                    <div className="pagination-buttons">
-                        <button className="page-btn">←</button>
-                        <button className="page-btn active">1</button>
-                        <button className="page-btn">2</button>
-                        <button className="page-btn">3</button>
-                        <span className="page-dots">...</span>
-                        <button className="page-btn">250</button>
-                        <button className="page-btn">→</button>
-                    </div>
-                </motion.div>
+      <div className="page-content">
+        {/* Toolbar */}
+        <motion.div
+          className="toolbar"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="toolbar-left">
+            <div className="search-box">
+              <Search size={18} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Buscar usuários..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
             </div>
 
-            {/* Ban Modal */}
-            <Modal
-                isOpen={showBanModal}
-                onClose={() => setShowBanModal(false)}
-                title={selectedUser?.status === 'banned' ? 'Desbanir Usuário' : 'Banir Usuário'}
-                size="sm"
+            <Button variant="secondary" icon={<Filter size={16} />}>
+              Filtros
+            </Button>
+          </div>
+
+          <div className="toolbar-right">
+            <Button variant="secondary" icon={<Download size={16} />}>
+              Exportar
+            </Button>
+            <Button variant="primary" icon={<Plus size={16} />}>
+              Novo Usuário
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Stats Bar */}
+        <motion.div
+          className="stats-bar"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="stat-item">
+            <span className="stat-value">{pagination.total}</span>
+            <span className="stat-label">Total</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value success">{users.length}</span>
+            <span className="stat-label">Nesta Página</span>
+          </div>
+        </motion.div>
+
+        {/* Table */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <DataTable
+            columns={columns}
+            data={users}
+            loading={loading}
+            keyExtractor={(item) => item.id}
+            onRowClick={(item) => console.log('Clicked:', item)}
+          />
+        </motion.div>
+
+        {/* Pagination */}
+        <motion.div
+          className="pagination"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          <span className="pagination-info">
+            Mostrando {((pagination.page - 1) * 10) + 1}-{Math.min(pagination.page * 10, pagination.total)} de {pagination.total}
+          </span>
+          <div className="pagination-buttons">
+            <button
+              className="page-btn"
+              onClick={() => handlePageChange(pagination.page - 1)}
+              disabled={pagination.page <= 1}
             >
-                <div className="modal-body">
-                    <p className="modal-text">
-                        {selectedUser?.status === 'banned'
-                            ? `Tem certeza que deseja desbanir o usuário ${selectedUser?.username}?`
-                            : `Tem certeza que deseja banir o usuário ${selectedUser?.username}?`
-                        }
-                    </p>
+              ←
+            </button>
+            {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(p => (
+              <button
+                key={p}
+                className={`page-btn ${pagination.page === p ? 'active' : ''}`}
+                onClick={() => handlePageChange(p)}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              className="page-btn"
+              onClick={() => handlePageChange(pagination.page + 1)}
+              disabled={pagination.page >= pagination.pages}
+            >
+              →
+            </button>
+          </div>
+        </motion.div>
+      </div>
 
-                    {selectedUser?.status !== 'banned' && (
-                        <div className="input-group">
-                            <label className="input-label">Motivo do ban</label>
-                            <input
-                                type="text"
-                                className="input"
-                                placeholder="Ex: Uso de cheat detectado"
-                            />
-                        </div>
-                    )}
+      {/* Ban Modal */}
+      <Modal
+        isOpen={showBanModal}
+        onClose={() => setShowBanModal(false)}
+        title={selectedUser?.status === 'banned' ? 'Desbanir Usuário' : 'Banir Usuário'}
+        size="sm"
+      >
+        <div className="modal-body">
+          <p className="modal-text">
+            {selectedUser?.status === 'banned'
+              ? `Tem certeza que deseja desbanir o usuário ${selectedUser?.username}?`
+              : `Tem certeza que deseja banir o usuário ${selectedUser?.username}?`
+            }
+          </p>
 
-                    <div className="modal-actions">
-                        <Button variant="secondary" onClick={() => setShowBanModal(false)}>
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant={selectedUser?.status === 'banned' ? 'success' : 'danger'}
-                            onClick={() => setShowBanModal(false)}
-                        >
-                            {selectedUser?.status === 'banned' ? 'Desbanir' : 'Banir'}
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+          {selectedUser?.status !== 'banned' && (
+            <div className="input-group">
+              <label className="input-label">Motivo do ban</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Ex: Uso de cheat detectado"
+              />
+            </div>
+          )}
 
-            <style jsx>{`
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={() => setShowBanModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant={selectedUser?.status === 'banned' ? 'success' : 'danger'}
+              onClick={() => setShowBanModal(false)}
+            >
+              {selectedUser?.status === 'banned' ? 'Desbanir' : 'Banir'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <style jsx>{`
         .page-content {
           padding: 24px 32px;
           display: flex;
@@ -493,6 +526,6 @@ export default function UsersPage() {
           }
         }
       `}</style>
-        </>
-    );
+    </>
+  );
 }

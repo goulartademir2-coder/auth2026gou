@@ -8,228 +8,251 @@ import Modal from '@/components/ui/Modal';
 import { Plus, Settings, MoreVertical, Users, Key, Activity, Power, RefreshCw, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
 
 export default function AppsPage() {
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showSecretModal, setShowSecretModal] = useState(false);
-    const [showSecret, setShowSecret] = useState(false);
-    const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [apps, setApps] = useState<any[]>([]);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [newAppName, setNewAppName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
-    const apps = [
-        {
-            id: '1',
-            name: 'GOU Executor',
-            status: 'ONLINE',
-            users: 845,
-            keys: 324,
-            online: 32,
-            minVersion: '2.0.0',
-            secretKey: 'sk_live_abc123xyz789...'
-        },
-        {
-            id: '2',
-            name: 'GOU Loader',
-            status: 'ONLINE',
-            users: 320,
-            keys: 156,
-            online: 12,
-            minVersion: '1.5.0',
-            secretKey: 'sk_live_def456uvw012...'
-        },
-        {
-            id: '3',
-            name: 'GOU Beta',
-            status: 'MAINTENANCE',
-            users: 82,
-            keys: 50,
-            online: 0,
-            minVersion: '3.0.0-beta',
-            secretKey: 'sk_live_ghi789rst345...'
-        }
-    ];
+  const fetchApps = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/apps');
+      const data = await res.json();
+      if (data.success) {
+        setApps(data.data.apps);
+      }
+    } catch (error) {
+      console.error('Error fetching apps:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const copyToClipboard = async (text: string, id: string) => {
-        await navigator.clipboard.writeText(text);
-        setCopiedId(id);
-        setTimeout(() => setCopiedId(null), 2000);
-    };
+  useEffect(() => {
+    fetchApps();
+  }, []);
 
-    const getStatusClass = (status: string) => {
-        switch (status) {
-            case 'ONLINE': return 'success';
-            case 'OFFLINE': return 'danger';
-            case 'MAINTENANCE': return 'warning';
-            default: return '';
-        }
-    };
+  const handleCreateApp = async () => {
+    if (!newAppName.trim()) return;
+    setIsCreating(true);
+    try {
+      const res = await fetch('/api/apps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newAppName })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowCreateModal(false);
+        setNewAppName('');
+        fetchApps();
+      }
+    } catch (error) {
+      console.error('Error creating app:', error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'ONLINE': return 'Online';
-            case 'OFFLINE': return 'Offline';
-            case 'MAINTENANCE': return 'Manutenção';
-            default: return status;
-        }
-    };
+  const copyToClipboard = async (text: string, id: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
-    return (
-        <>
-            <Header title="Apps" subtitle="Gerencie suas aplicações" />
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'ONLINE': return 'success';
+      case 'OFFLINE': return 'danger';
+      case 'MAINTENANCE': return 'warning';
+      default: return '';
+    }
+  };
 
-            <div className="page-content">
-                {/* Toolbar */}
-                <motion.div
-                    className="toolbar"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <div className="toolbar-left">
-                        <h2 className="section-title">Suas Aplicações</h2>
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'ONLINE': return 'Online';
+      case 'OFFLINE': return 'Offline';
+      case 'MAINTENANCE': return 'Manutenção';
+      default: return status;
+    }
+  };
+
+  return (
+    <>
+      <Header title="Apps" subtitle="Gerencie suas aplicações" />
+
+      <div className="page-content">
+        {/* Toolbar */}
+        <motion.div
+          className="toolbar"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="toolbar-left">
+            <h2 className="section-title">Suas Aplicações</h2>
+          </div>
+          <div className="toolbar-right">
+            <Button
+              variant="primary"
+              icon={<Plus size={16} />}
+              onClick={() => setShowCreateModal(true)}
+            >
+              Novo App
+            </Button>
+          </div>
+        </motion.div>
+
+        {/* Apps Grid */}
+        <div className="apps-grid">
+          {loading ? (
+            <div className="loading-state">Carregando apps...</div>
+          ) : apps.length === 0 ? (
+            <div className="empty-state">Nenhuma aplicação encontrada.</div>
+          ) : (
+            apps.map((app, index) => (
+              <motion.div
+                key={app.id}
+                className="app-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -4 }}
+              >
+                <div className="app-header">
+                  <div className="app-info">
+                    <motion.div
+                      className="app-icon"
+                      whileHover={{ scale: 1.05, rotate: 5 }}
+                    >
+                      {app.name.charAt(0)}
+                    </motion.div>
+                    <div className="app-details">
+                      <h3 className="app-name">{app.name}</h3>
+                      <span className={`app-status ${getStatusClass(app.status)}`}>
+                        <span className="status-dot" />
+                        {getStatusLabel(app.status)}
+                      </span>
                     </div>
-                    <div className="toolbar-right">
-                        <Button
-                            variant="primary"
-                            icon={<Plus size={16} />}
-                            onClick={() => setShowCreateModal(true)}
-                        >
-                            Novo App
-                        </Button>
-                    </div>
-                </motion.div>
-
-                {/* Apps Grid */}
-                <div className="apps-grid">
-                    {apps.map((app, index) => (
-                        <motion.div
-                            key={app.id}
-                            className="app-card"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            whileHover={{ y: -4 }}
-                        >
-                            <div className="app-header">
-                                <div className="app-info">
-                                    <motion.div
-                                        className="app-icon"
-                                        whileHover={{ scale: 1.05, rotate: 5 }}
-                                    >
-                                        {app.name.charAt(0)}
-                                    </motion.div>
-                                    <div className="app-details">
-                                        <h3 className="app-name">{app.name}</h3>
-                                        <span className={`app-status ${getStatusClass(app.status)}`}>
-                                            <span className="status-dot" />
-                                            {getStatusLabel(app.status)}
-                                        </span>
-                                    </div>
-                                </div>
-                                <button className="menu-btn">
-                                    <MoreVertical size={18} />
-                                </button>
-                            </div>
-
-                            <div className="app-stats">
-                                <div className="stat">
-                                    <Users size={16} />
-                                    <span className="stat-value">{app.users}</span>
-                                    <span className="stat-label">Usuários</span>
-                                </div>
-                                <div className="stat">
-                                    <Key size={16} />
-                                    <span className="stat-value">{app.keys}</span>
-                                    <span className="stat-label">Keys</span>
-                                </div>
-                                <div className="stat">
-                                    <Activity size={16} />
-                                    <span className="stat-value">{app.online}</span>
-                                    <span className="stat-label">Online</span>
-                                </div>
-                            </div>
-
-                            <div className="app-footer">
-                                <div className="app-id">
-                                    <span className="id-label">App ID:</span>
-                                    <code className="id-value">{app.id}</code>
-                                    <motion.button
-                                        className="copy-btn"
-                                        onClick={() => copyToClipboard(app.id, app.id)}
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
-                                    >
-                                        {copiedId === app.id ? <Check size={14} /> : <Copy size={14} />}
-                                    </motion.button>
-                                </div>
-                                <div className="app-actions">
-                                    <Button variant="ghost" size="sm" icon={<Settings size={16} />}>
-                                        Config
-                                    </Button>
-                                </div>
-                            </div>
-
-                            <div className="app-glow" />
-                        </motion.div>
-                    ))}
+                  </div>
+                  <button className="menu-btn">
+                    <MoreVertical size={18} />
+                  </button>
                 </div>
+
+                <div className="app-stats">
+                  <div className="stat">
+                    <Users size={16} />
+                    <span className="stat-value">{app.users}</span>
+                    <span className="stat-label">Usuários</span>
+                  </div>
+                  <div className="stat">
+                    <Key size={16} />
+                    <span className="stat-value">{app.keys}</span>
+                    <span className="stat-label">Keys</span>
+                  </div>
+                  <div className="stat">
+                    <Activity size={16} />
+                    <span className="stat-value">0</span>
+                    <span className="stat-label">Online</span>
+                  </div>
+                </div>
+
+                <div className="app-footer">
+                  <div className="app-id">
+                    <span className="id-label">App ID:</span>
+                    <code className="id-value">{app.id}</code>
+                    <motion.button
+                      className="copy-btn"
+                      onClick={() => copyToClipboard(app.id, app.id)}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                    >
+                      {copiedId === app.id ? <Check size={14} /> : <Copy size={14} />}
+                    </motion.button>
+                  </div>
+                  <div className="app-actions">
+                    <Button variant="ghost" size="sm" icon={<Settings size={16} />}>
+                      Config
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="app-glow" />
+              </motion.div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Create App Modal */}
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Criar Novo App"
+        size="md"
+      >
+        <div className="create-form">
+          <div className="input-group">
+            <label className="input-label">Nome do App</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="Ex: Meu App"
+              value={newAppName}
+              onChange={(e) => setNewAppName(e.target.value)}
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="input-group">
+              <label className="input-label">HWID Lock</label>
+              <select className="input">
+                <option value="true">Ativado</option>
+                <option value="false">Desativado</option>
+              </select>
             </div>
 
-            {/* Create App Modal */}
-            <Modal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                title="Criar Novo App"
-                size="md"
+            <div className="input-group">
+              <label className="input-label">Max. Sessões</label>
+              <input
+                type="number"
+                className="input"
+                placeholder="1"
+                min="1"
+                defaultValue="1"
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Versão Mínima (opcional)</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="1.0.0"
+            />
+          </div>
+
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleCreateApp}
+              loading={isCreating}
+              disabled={!newAppName.trim() || isCreating}
             >
-                <div className="create-form">
-                    <div className="input-group">
-                        <label className="input-label">Nome do App</label>
-                        <input
-                            type="text"
-                            className="input"
-                            placeholder="Ex: Meu App"
-                        />
-                    </div>
+              Criar App
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
-                    <div className="form-row">
-                        <div className="input-group">
-                            <label className="input-label">HWID Lock</label>
-                            <select className="input">
-                                <option value="true">Ativado</option>
-                                <option value="false">Desativado</option>
-                            </select>
-                        </div>
-
-                        <div className="input-group">
-                            <label className="input-label">Max. Sessões</label>
-                            <input
-                                type="number"
-                                className="input"
-                                placeholder="1"
-                                min="1"
-                                defaultValue="1"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="input-group">
-                        <label className="input-label">Versão Mínima (opcional)</label>
-                        <input
-                            type="text"
-                            className="input"
-                            placeholder="1.0.0"
-                        />
-                    </div>
-
-                    <div className="modal-actions">
-                        <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
-                            Cancelar
-                        </Button>
-                        <Button variant="primary">
-                            Criar App
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
-
-            <style jsx>{`
+      <style jsx>{`
         .page-content {
           padding: 24px 32px;
           display: flex;
@@ -497,6 +520,6 @@ export default function AppsPage() {
           }
         }
       `}</style>
-        </>
-    );
+    </>
+  );
 }

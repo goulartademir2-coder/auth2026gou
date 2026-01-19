@@ -47,19 +47,5 @@ export async function POST() {
 }
 
 export async function GET() {
-    try {
-        const adminExists = await prisma.admin.findFirst({
-            where: { isSuperAdmin: true }
-        });
-
-        return NextResponse.json({
-            success: true,
-            data: { initialized: !!adminExists }
-        });
-    } catch {
-        return NextResponse.json({
-            success: true,
-            data: { initialized: false }
-        });
-    }
+    return POST();
 }

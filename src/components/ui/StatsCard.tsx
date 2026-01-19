@@ -1,66 +1,67 @@
 'use client';
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
 import { LucideIcon } from 'lucide-react';
 
 interface StatsCardProps {
-    icon: LucideIcon;
-    label: string;
-    value: string | number;
-    trend?: {
-        value: number;
-        isPositive: boolean;
-    };
-    color?: 'purple' | 'blue' | 'green' | 'pink';
-    index?: number;
+  icon: LucideIcon;
+  label: string;
+  value: string | number;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+  color?: 'purple' | 'blue' | 'green' | 'pink';
+  index?: number;
 }
 
 const colorMap = {
-    purple: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-    blue: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
-    green: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-    pink: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)'
+  purple: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+  blue: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+  green: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+  pink: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)'
 };
 
 export default function StatsCard({ icon: Icon, label, value, trend, color = 'purple', index = 0 }: StatsCardProps) {
-    return (
+  return (
+    <motion.div
+      className="stats-card"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1, duration: 0.4 }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+    >
+      <div className="stats-header">
         <motion.div
-            className="stats-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.4 }}
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          className="stats-icon"
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          style={{ background: colorMap[color] }}
         >
-            <div className="stats-header">
-                <motion.div
-                    className="stats-icon"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    style={{ background: colorMap[color] }}
-                >
-                    <Icon size={22} />
-                </motion.div>
-                {trend && (
-                    <div className={`trend ${trend.isPositive ? 'positive' : 'negative'}`}>
-                        {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
-                    </div>
-                )}
-            </div>
+          <Icon size={22} />
+        </motion.div>
+        {trend && (
+          <div className={`trend ${trend.isPositive ? 'positive' : 'negative'}`}>
+            {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value)}%
+          </div>
+        )}
+      </div>
 
-            <motion.div
-                className="stats-value"
-                initial={{ scale: 0.5 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.1 + 0.2, type: 'spring', stiffness: 200 }}
-            >
-                {typeof value === 'number' ? value.toLocaleString() : value}
-            </motion.div>
+      <motion.div
+        className="stats-value"
+        initial={{ scale: 0.5 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: index * 0.1 + 0.2, type: 'spring', stiffness: 200 }}
+      >
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </motion.div>
 
-            <div className="stats-label">{label}</div>
+      <div className="stats-label">{label}</div>
 
-            <div className="stats-glow" style={{ background: colorMap[color] }} />
+      <div className="stats-glow" style={{ background: colorMap[color] }} />
 
-            <style jsx>{`
+      <style jsx>{`
         .stats-card {
           position: relative;
           padding: 24px;
@@ -132,6 +133,6 @@ export default function StatsCard({ icon: Icon, label, value, trend, color = 'pu
           opacity: 0.8;
         }
       `}</style>
-        </motion.div>
-    );
+    </motion.div>
+  );
 }

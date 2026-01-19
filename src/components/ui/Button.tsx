@@ -22,16 +22,19 @@ export default function Button({
   icon,
   children,
   disabled,
+  onClick,
+  type = 'button',
   ...props
 }: ButtonProps) {
+  const isButtonDisabled = disabled || loading;
   return (
     <motion.button
       className={`btn btn-${variant} btn-${size}`}
-      disabled={disabled || loading}
-      whileHover={{ scale: disabled ? 1 : 1.02 }}
-      whileTap={{ scale: disabled ? 1 : 0.98 }}
-      onClick={props.onClick}
-      type={props.type || 'button'}
+      disabled={isButtonDisabled}
+      whileHover={{ scale: isButtonDisabled ? 1 : 1.02 }}
+      whileTap={{ scale: isButtonDisabled ? 1 : 0.98 }}
+      onClick={onClick}
+      type={type}
       {...(props as any)}
     >
       {loading ? (

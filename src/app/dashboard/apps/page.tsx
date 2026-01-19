@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Header from '@/components/layout/Header';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import { toast } from 'react-hot-toast';
 import { Plus, Settings, MoreVertical, Users, Key, Activity, Power, RefreshCw, Trash2, Copy, Check, Eye, EyeOff } from 'lucide-react';
 
 export default function AppsPage() {
@@ -45,12 +46,16 @@ export default function AppsPage() {
       });
       const data = await res.json();
       if (data.success) {
+        toast.success('Aplicação criada com sucesso!');
         setShowCreateModal(false);
         setNewAppName('');
         fetchApps();
+      } else {
+        toast.error(data.error?.message || 'Falha ao criar aplicação');
       }
     } catch (error) {
       console.error('Error creating app:', error);
+      toast.error('Erro de conexão ao criar aplicação');
     } finally {
       setIsCreating(false);
     }

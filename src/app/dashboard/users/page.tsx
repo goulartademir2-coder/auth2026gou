@@ -7,6 +7,7 @@ import DataTable from '@/components/ui/DataTable';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { Search, Plus, Ban, Unlock, RotateCcw, Trash2, Filter, Download } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,12 +60,16 @@ export default function UsersPage() {
       });
       const data = await res.json();
       if (data.success) {
+        toast.success('Usuário criado com sucesso!');
         setShowCreateModal(false);
         setNewUser({ username: '', email: '', password: '' });
         fetchUsers(pagination.page, searchQuery);
+      } else {
+        toast.error(data.error?.message || 'Falha ao criar usuário');
       }
     } catch (error) {
       console.error('Error creating user:', error);
+      toast.error('Erro de conexão ao criar usuário');
     } finally {
       setIsCreating(false);
     }

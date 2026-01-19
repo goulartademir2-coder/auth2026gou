@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { successResponse, handleApiError, ApiError } from '@/lib/api-utils';
+import { successResponse, handleApiError } from '@/lib/api-utils';
 
 export async function GET(request: NextRequest) {
     try {
@@ -31,9 +31,9 @@ export async function GET(request: NextRequest) {
                     email: true,
                     hwid: true,
                     isBanned: true,
-                    subscriptionExpires: true,
+                    expiresAt: true,
                     createdAt: true,
-                    lastLoginAt: true
+                    updatedAt: true
                 }
             }),
             prisma.user.count({ where })

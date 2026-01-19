@@ -5,38 +5,41 @@ import { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost';
-    size?: 'sm' | 'md' | 'lg';
-    loading?: boolean;
-    icon?: ReactNode;
-    children: ReactNode;
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+  icon?: ReactNode;
+  children?: ReactNode;
+  onClick?: any;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
 }
 
 export default function Button({
-    variant = 'primary',
-    size = 'md',
-    loading = false,
-    icon,
-    children,
-    disabled,
-    ...props
+  variant = 'primary',
+  size = 'md',
+  loading = false,
+  icon,
+  children,
+  disabled,
+  ...props
 }: ButtonProps) {
-    return (
-        <motion.button
-            className={`btn btn-${variant} btn-${size}`}
-            disabled={disabled || loading}
-            whileHover={{ scale: disabled ? 1 : 1.02 }}
-            whileTap={{ scale: disabled ? 1 : 0.98 }}
-            {...props as any}
-        >
-            {loading ? (
-                <Loader2 size={18} className="spin" />
-            ) : icon ? (
-                <span className="btn-icon">{icon}</span>
-            ) : null}
-            <span>{children}</span>
+  return (
+    <motion.button
+      className={`btn btn-${variant} btn-${size}`}
+      disabled={disabled || loading}
+      whileHover={{ scale: disabled ? 1 : 1.02 }}
+      whileTap={{ scale: disabled ? 1 : 0.98 }}
+      {...props as any}
+    >
+      {loading ? (
+        <Loader2 size={18} className="spin" />
+      ) : icon ? (
+        <span className="btn-icon">{icon}</span>
+      ) : null}
+      <span>{children}</span>
 
-            <style jsx global>{`
+      <style jsx global>{`
         .btn {
           display: inline-flex;
           align-items: center;
@@ -132,6 +135,6 @@ export default function Button({
           to { transform: rotate(360deg); }
         }
       `}</style>
-        </motion.button>
-    );
+    </motion.button>
+  );
 }

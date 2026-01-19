@@ -1,210 +1,210 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-    const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
 
-        const formData = new FormData(e.currentTarget);
-        const username = formData.get('username');
-        const password = formData.get('password');
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get('username');
+    const password = formData.get('password');
 
-        try {
-            const res = await fetch('/api/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-            const data = await res.json();
+      const data = await res.json();
 
-            if (data.success) {
-                localStorage.setItem('token', data.data.token);
-                localStorage.setItem('admin', JSON.stringify(data.data.admin));
-                router.push('/dashboard');
-            } else {
-                setError(data.error?.message || 'Erro ao fazer login');
-            }
-        } catch {
-            setError('Erro de conexão com o servidor');
-        } finally {
-            setLoading(false);
-        }
-    };
+      if (data.success) {
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('admin', JSON.stringify(data.data.admin));
+        router.push('/dashboard');
+      } else {
+        setError(data.error?.message || 'Erro ao fazer login');
+      }
+    } catch {
+      setError('Erro de conexão com o servidor');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="login-container">
-            {/* Background Effects */}
-            <div className="bg-effects">
-                <motion.div
-                    className="orb orb-1"
-                    animate={{
-                        x: [0, 100, 0],
-                        y: [0, -50, 0],
-                        scale: [1, 1.2, 1]
-                    }}
-                    transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                />
-                <motion.div
-                    className="orb orb-2"
-                    animate={{
-                        x: [0, -80, 0],
-                        y: [0, 80, 0],
-                        scale: [1, 0.8, 1]
-                    }}
-                    transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
-                />
-                <motion.div
-                    className="orb orb-3"
-                    animate={{
-                        x: [0, 50, 0],
-                        y: [0, 100, 0]
-                    }}
-                    transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-                />
-            </div>
+  return (
+    <div className="login-container">
+      {/* Background Effects */}
+      <div className="bg-effects">
+        <motion.div
+          className="orb orb-1"
+          animate={{
+            x: [0, 100, 0],
+            y: [0, -50, 0],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+        />
+        <motion.div
+          className="orb orb-2"
+          animate={{
+            x: [0, -80, 0],
+            y: [0, 80, 0],
+            scale: [1, 0.8, 1]
+          }}
+          transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+        />
+        <motion.div
+          className="orb orb-3"
+          animate={{
+            x: [0, 50, 0],
+            y: [0, 100, 0]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
+        />
+      </div>
 
+      <motion.div
+        className="login-card"
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, type: 'spring' }}
+      >
+        {/* Logo */}
+        <div className="login-header">
+          <motion.div
+            className="logo-container"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+          >
+            <svg viewBox="0 0 60 60" fill="none" className="logo-svg">
+              <defs>
+                <linearGradient id="loginGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8B5CF6" />
+                  <stop offset="100%" stopColor="#3B82F6" />
+                </linearGradient>
+              </defs>
+              <circle cx="30" cy="30" r="27" stroke="url(#loginGradient)" strokeWidth="3" fill="none" />
+              <path d="M20 30L27 37L40 24" stroke="url(#loginGradient)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </motion.div>
+
+          <motion.h1
+            className="login-title"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            GOU <span>Auth</span>
+          </motion.h1>
+
+          <motion.p
+            className="login-subtitle"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            Acesse o painel de administração
+          </motion.p>
+        </div>
+
+        {/* Form */}
+        <motion.form
+          onSubmit={handleSubmit}
+          className="login-form"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          {error && (
             <motion.div
-                className="login-card"
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.5, type: 'spring' }}
+              className="error-alert"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
             >
-                {/* Logo */}
-                <div className="login-header">
-                    <motion.div
-                        className="logo-container"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-                    >
-                        <svg viewBox="0 0 60 60" fill="none" className="logo-svg">
-                            <defs>
-                                <linearGradient id="loginGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="0%" stopColor="#8B5CF6" />
-                                    <stop offset="100%" stopColor="#3B82F6" />
-                                </linearGradient>
-                            </defs>
-                            <circle cx="30" cy="30" r="27" stroke="url(#loginGradient)" strokeWidth="3" fill="none" />
-                            <path d="M20 30L27 37L40 24" stroke="url(#loginGradient)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </motion.div>
-
-                    <motion.h1
-                        className="login-title"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3 }}
-                    >
-                        GOU <span>Auth</span>
-                    </motion.h1>
-
-                    <motion.p
-                        className="login-subtitle"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                    >
-                        Acesse o painel de administração
-                    </motion.p>
-                </div>
-
-                {/* Form */}
-                <motion.form
-                    onSubmit={handleSubmit}
-                    className="login-form"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                >
-                    {error && (
-                        <motion.div
-                            className="error-alert"
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                        >
-                            {error}
-                        </motion.div>
-                    )}
-
-                    <div className="input-group">
-                        <label className="input-label">Usuário</label>
-                        <div className="input-wrapper">
-                            <User size={18} className="input-icon" />
-                            <input
-                                type="text"
-                                name="username"
-                                placeholder="Digite seu usuário"
-                                className="input"
-                                required
-                                autoComplete="username"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="input-group">
-                        <label className="input-label">Senha</label>
-                        <div className="input-wrapper">
-                            <Lock size={18} className="input-icon" />
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                name="password"
-                                placeholder="Digite sua senha"
-                                className="input"
-                                required
-                                autoComplete="current-password"
-                            />
-                            <button
-                                type="button"
-                                className="password-toggle"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                        </div>
-                    </div>
-
-                    <motion.button
-                        type="submit"
-                        className="submit-btn"
-                        disabled={loading}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                    >
-                        {loading ? (
-                            <motion.div
-                                className="spinner"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                            />
-                        ) : (
-                            'Entrar'
-                        )}
-                    </motion.button>
-                </motion.form>
-
-                <motion.p
-                    className="login-footer"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                >
-                    Sistema de Autenticação e Licenciamento
-                </motion.p>
+              {error}
             </motion.div>
+          )}
 
-            <style jsx>{`
+          <div className="input-group">
+            <label className="input-label">Usuário</label>
+            <div className="input-wrapper">
+              <User size={18} className="input-icon" />
+              <input
+                type="text"
+                name="username"
+                placeholder="Digite seu usuário"
+                className="input"
+                required
+                autoComplete="username"
+              />
+            </div>
+          </div>
+
+          <div className="input-group">
+            <label className="input-label">Senha</label>
+            <div className="input-wrapper">
+              <Lock size={18} className="input-icon" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Digite sua senha"
+                className="input"
+                required
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          <motion.button
+            type="submit"
+            className="submit-btn"
+            disabled={loading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            {loading ? (
+              <motion.div
+                className="spinner"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+              />
+            ) : (
+              'Entrar'
+            )}
+          </motion.button>
+        </motion.form>
+
+        <motion.p
+          className="login-footer"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          Sistema de Autenticação e Licenciamento
+        </motion.p>
+      </motion.div>
+
+      <style jsx>{`
         .login-container {
           min-height: 100vh;
           display: flex;
@@ -422,6 +422,6 @@ export default function LoginPage() {
           margin-top: 24px;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }
